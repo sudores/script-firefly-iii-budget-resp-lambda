@@ -95,11 +95,11 @@ func (f FireflyiiiConnection) getRespBudget(id int) (*returnStruct, error) {
 func fireflyiiiBudgetToreturn(f fireflyiiiBudget) *returnStruct {
 	spent, err := strconv.ParseFloat(f.Data.Attributes.Spent[0].Sum, 64)
 	if err != nil {
-		log.Trace().Err(err).Msg("Failed to convert spent")
+		log.Error().Err(err).Msg("Failed to convert spent")
 	}
 	budgeted, err := strconv.ParseFloat(f.Data.Attributes.AutoBudgetAmount, 64)
 	if err != nil {
-		log.Trace().Err(err).Msg("Failed to convert budgeted")
+		log.Error().Err(err).Msg("Failed to convert budgeted")
 	}
 	return &returnStruct{
 		Type:        f.Data.Attributes.AutoBudgetPeriod,
