@@ -1,6 +1,6 @@
 version: '3'
 services:
-  firefly-iii-bank-sync:
+  script-firefly-iii-budget-resp:
     container_name: script-firefly-iii-budget-resp
     image: vepl/script-firefly-iii-budget-resp
     build:
