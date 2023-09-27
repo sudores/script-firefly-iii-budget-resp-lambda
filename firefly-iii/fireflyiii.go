@@ -136,7 +136,7 @@ type fireflyiiiBudget struct {
 type returnStruct struct {
 	Type        string `json:"type"`
 	Spent       string `json:"spent"`
-	LeftToSpent string `json:"left_to_spent"`
+	LeftToSpent string `json:"left"`
 	Budgeted    string `json:"budgeted"`
 }
 
