@@ -10,7 +10,7 @@ steps:
         path: /var/run/docker.sock
     commands:
       - docker build . -t vepl/script-firefly-iii-budget-resp:latest
-      - echo ${DOCKER_PAT} | docker login -u vepl
+      - echo ${DOCKER_PAT} | docker login -u vepl --password-stdin
       - docker push  vepl/script-firefly-iii-budget-resp:latest
     environment:
       DOCKER_PAT:
