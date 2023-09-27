@@ -1,0 +1,12 @@
+version: '3'
+services:
+  firefly-iii-bank-sync:
+    container_name: script-firefly-iii-budget-resp
+    image: vepl/script-firefly-iii-budget-resp
+    build:
+      context: .
+    environment:
+      - LOG_LEVEL="info"
+      - FFI_TOKEN="Your firefly PAT token"
+      - FFI_URL="Your firefly installation URL"
+      - BUDGET_PATH_RELATION="Mapping of path to budget url. Format <path>:<id>,<path1>:<id1>"
