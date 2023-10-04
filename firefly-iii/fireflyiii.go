@@ -93,7 +93,7 @@ func (f FireflyiiiConnection) getRespBudget(id int) (*returnStruct, error) {
 }
 
 func fireflyiiiBudgetToreturn(f fireflyiiiBudget) *returnStruct {
-	spent, err := strconv.ParseFloat(f.Data.Attributes.Spent[0].Sum, 64)
+	spent, err := getSpent(f)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to convert spent")
 	}
@@ -107,6 +107,13 @@ func fireflyiiiBudgetToreturn(f fireflyiiiBudget) *returnStruct {
 		Spent:       fmt.Sprintf("%.2f", math.Abs(spent)),
 		LeftToSpent: fmt.Sprintf("%.2f", math.Abs(budgeted)-math.Abs(spent)),
 	}
+}
+
+func getSpent(f fireflyiiiBudget) (float64, error) {
+	if len(f.Data.Attributes.Spent) == 0 {
+		return 0.0, nil
+	}
+	return strconv.ParseFloat(f.Data.Attributes.Spent[0].Sum, 64)
 }
 
 func (f *FireflyiiiConnection) newRequest(method, path string, body io.Reader) (*http.Request, error) {
