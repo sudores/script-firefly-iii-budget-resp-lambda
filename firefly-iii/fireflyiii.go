@@ -1,6 +1,7 @@
 package fireflyiii
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,38 +30,42 @@ func NewFireflyiiiConnection(PAT, FireflyiiiURL string, BudgetPathRelation map[s
 	}
 }
 
-func (f FireflyiiiConnection) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Info().Msg("Getting budgets")
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		log.Debug().Msg("Received request with forbidden method")
-		return
+func (f FireflyiiiConnection) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
+	fmt.Println(string(payload))
+	id, err := getAliasFromPayload(payload)
+	if err != nil {
+		return []byte("Error getting path param"), err
 	}
-
-	log.Trace().Msg("Checking for path budget correspondence")
-	budgetID, ok := f.budgetPathRelation[r.URL.Path[1:]]
+	budgetID, ok := f.budgetPathRelation[id]
 	if !ok {
-		w.WriteHeader(http.StatusNotFound)
-		return
+		return []byte(`{"error":"Budget not found"}`), errors.New("Budget not found")
 	}
-	log.Trace().Msgf("Path is ok. budget id is %d", budgetID)
 
 	log.Trace().Msg("Getting responce of budget")
 	respBudget, err := f.getRespBudget(budgetID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return []byte(`{"error":"Error occured while getting budget"}`), errors.New("Error occured while getting budget")
 	}
 	log.Trace().Msg("Got responce of budget")
 
 	respJson, err := anyToJson(respBudget)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return []byte(`{"error":"Error occured while unmarshaling budget"}`), errors.New("Error occured while unmarshaling budget")
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	fmt.Fprint(w, string(respJson))
+	return respJson, nil
+}
+
+func getAliasFromPayload(payload []byte) (string, error) {
+	obj := struct {
+		PathParameters struct {
+			Id string `json:"id"`
+		} `json:"pathParameters"`
+	}{}
+	if err := json.Unmarshal(payload, &obj); err != nil {
+		return "", errors.New("Failed to unmarshal params")
+	}
+	return obj.PathParameters.Id, nil
 }
 
 func (f FireflyiiiConnection) getRespBudget(id int) (*returnStruct, error) {

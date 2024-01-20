@@ -1,9 +1,9 @@
 package main
 
 import (
-	"net/http"
 	"os"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/sudores/script-firefly-iii-budget-resp/cnf"
@@ -20,15 +20,7 @@ func main() {
 	log.Info().Msg("Logging setup success")
 
 	ffi := fireflyiii.NewFireflyiiiConnection(cfg.FFIToken, cfg.FFIURL, cfg.BudgetPathRelation)
-
-	rtr := http.NewServeMux()
-	rtr.Handle("/", ffi)
-
-	log.Info().Msgf("Starting serving. Listening at %s", cfg.ListenAddr)
-	http.Handle("/", rtr)
-	if err := http.ListenAndServe(cfg.ListenAddr, nil); err != nil {
-		log.Fatal().Err(err).Msg("Server failed")
-	}
+	lambda.Start(ffi)
 }
 
 // loggingInit setups the logging of whole app
