@@ -1,20 +1,30 @@
 kind: pipeline
 type: docker
-name: script-firefly-iii-budget-resp
+name: script-firefly-iii-budget-resp-lb
 
 steps:
   - name: Build clear
-    image: docker:dind
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
+    image: golang:alpine3.19
     commands:
-      - docker build . -t vepl/script-firefly-iii-budget-resp:latest
-      - docker login -u vepl -p $DOCKER_PAT
-      - docker push  vepl/script-firefly-iii-budget-resp:latest
+      - apk add make
+      - make build
+    when:
+      branch:
+      - master
+
+  - name: Deploy to lambda
+    image: alpine/k8s:1.26.13
+    commands:
+      - aws lambda update-function-code \
+        --function-name $LAMBDA_NAME \
+        --zip-file ./main.zip
     environment:
-      DOCKER_PAT:
-        from_secret: DOCKER_PAT
+      AWS_ACCESS_KEY_ID:
+        from_secret: AWS_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: AWS_SECRET_ACCESS_KEY
+      LAMBDA_NAME: "firefly-iii-budget-resp"
+      AWS_REGION: 'us-east-1'
     when:
       branch:
       - master
