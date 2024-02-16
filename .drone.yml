@@ -6,7 +6,7 @@ steps:
   - name: Build clear
     image: golang:alpine3.19
     commands:
-      - apk add make
+      - apk add make zip
       - make build
     when:
       branch:
