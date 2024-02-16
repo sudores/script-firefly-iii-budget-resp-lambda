@@ -15,9 +15,7 @@ steps:
   - name: Deploy to lambda
     image: alpine/k8s:1.26.13
     commands:
-      - aws lambda update-function-code \
-        --function-name firefly-iii-budget-resp \
-        --zip-file fileb://main.zip
+      - aws lambda update-function-code --function-name firefly-iii-budget-resp --zip-file fileb://main.zip
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: AWS_ACCESS_KEY_ID
