@@ -69,13 +69,13 @@ func getAliasFromPayload(payload []byte) (string, error) {
 
 func (f FireflyiiiConnection) getBudgetCurrentLimit(id int) (*returnStruct, error) {
 	path := fmt.Sprintf("/api/v1/budgets/%d/limits?start=%s", id, getFirstMonthDate())
-	r, err := f.newRequest(http.MethodGet, path, nil)
+	req, err := f.newRequest(http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Trace().Msgf("Getting budget request %s", r.URL.String())
-	resp, err := f.cl.Do(r)
+	log.Trace().Msgf("Getting budget request %s", req.URL.String())
+	resp, err := f.cl.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (f FireflyiiiConnection) getBudgetCurrentLimit(id int) (*returnStruct, erro
 	}
 
 	defer resp.Body.Close()
-	body, err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
