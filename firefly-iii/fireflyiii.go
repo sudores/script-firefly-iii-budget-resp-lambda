@@ -51,7 +51,7 @@ func (f FireflyiiiConnection) Invoke(ctx context.Context, payload []byte) ([]byt
 	if err != nil {
 		return []byte(`{"error":"Error occured while unmarshaling budget"}`), errors.New("Error occured while unmarshaling budget")
 	}
-
+	log.Trace().Msg(string(respJson))
 	return respJson, nil
 }
 
@@ -104,6 +104,8 @@ func (f FireflyiiiConnection) getBudgetCurrentLimit(id int) (*returnStruct, erro
 	if err != nil {
 		return nil, err
 	}
+
+	log.Trace().Msgf("Getting budget request %s", r.URL.String())
 	resp, err := f.cl.Do(r)
 	if err != nil {
 		return nil, err
@@ -117,6 +119,7 @@ func (f FireflyiiiConnection) getBudgetCurrentLimit(id int) (*returnStruct, erro
 	if err != nil {
 		return nil, err
 	}
+	log.Trace().Msgf("Got responce body %s", string(body))
 
 	ffib := fireflyiiiLimit{}
 	if err := json.Unmarshal(body, &ffib); err != nil {
