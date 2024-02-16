@@ -31,7 +31,6 @@ func NewFireflyiiiConnection(PAT, FireflyiiiURL string, BudgetPathRelation map[s
 }
 
 func (f FireflyiiiConnection) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
-	fmt.Println(string(payload))
 	id, err := getAliasFromPayload(payload)
 	if err != nil {
 		return []byte("Error getting path param"), err
@@ -42,7 +41,7 @@ func (f FireflyiiiConnection) Invoke(ctx context.Context, payload []byte) ([]byt
 	}
 
 	log.Trace().Msg("Getting responce of budget")
-	respBudget, err := f.getRespBudget(budgetID)
+	respBudget, err := f.getBudgetCurrentLimit(budgetID)
 	if err != nil {
 		return []byte(`{"error":"Error occured while getting budget"}`), errors.New("Error occured while getting budget")
 	}
@@ -68,6 +67,7 @@ func getAliasFromPayload(payload []byte) (string, error) {
 	return obj.PathParameters.Id, nil
 }
 
+/*
 func (f FireflyiiiConnection) getRespBudget(id int) (*returnStruct, error) {
 	req, err := f.newRequest(http.MethodGet, "/api/v1/budgets/"+fmt.Sprint(id)+
 		fmt.Sprintf("?start=%s&end=%s", getFirstMonthDate(), getToday()), nil)
@@ -90,35 +90,58 @@ func (f FireflyiiiConnection) getRespBudget(id int) (*returnStruct, error) {
 		return nil, err
 	}
 	log.Trace().Msgf("Got responce body %s", string(body))
-	ffib := fireflyiiiBudget{}
+	ffib := fireflyiiiLimit{}
+	if err := json.Unmarshal(body, &ffib); err != nil {
+		return nil, err
+	}
+	return fireflyiiiBudgetToreturn(ffib), nil
+}
+*/
+
+func (f FireflyiiiConnection) getBudgetCurrentLimit(id int) (*returnStruct, error) {
+	path := fmt.Sprintf("/api/v1/budgets/%d/limits&start=%s", id, getFirstMonthDate())
+	r, err := f.newRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := f.cl.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	ffib := fireflyiiiLimit{}
 	if err := json.Unmarshal(body, &ffib); err != nil {
 		return nil, err
 	}
 	return fireflyiiiBudgetToreturn(ffib), nil
 }
 
-func fireflyiiiBudgetToreturn(f fireflyiiiBudget) *returnStruct {
-	spent, err := getSpent(f)
+func fireflyiiiBudgetToreturn(f fireflyiiiLimit) *returnStruct {
+	spent, err := strconv.ParseFloat(f.Data[0].Attributes.Spent, 64)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to convert spent")
 	}
-	budgeted, err := strconv.ParseFloat(f.Data.Attributes.AutoBudgetAmount, 64)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to convert budgeted")
-	}
-	return &returnStruct{
-		Type:        f.Data.Attributes.AutoBudgetPeriod,
-		Budgeted:    fmt.Sprintf("%.2f", math.Abs(budgeted)),
-		Spent:       fmt.Sprintf("%.2f", math.Abs(spent)),
-		LeftToSpent: fmt.Sprintf("%.2f", math.Abs(budgeted)-math.Abs(spent)),
-	}
-}
 
-func getSpent(f fireflyiiiBudget) (float64, error) {
-	if len(f.Data.Attributes.Spent) == 0 {
-		return 0.0, nil
+	limit, err := strconv.ParseFloat(f.Data[0].Attributes.Amount, 64)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to convert limit aka budgeted")
 	}
-	return strconv.ParseFloat(f.Data.Attributes.Spent[0].Sum, 64)
+
+	return &returnStruct{
+		Type:        f.Data[0].Attributes.Period,
+		Budgeted:    fmt.Sprintf("%.2f", math.Abs(limit)),
+		Spent:       fmt.Sprintf("%.2f", math.Abs(spent)),
+		LeftToSpent: fmt.Sprintf("%.2f", math.Abs(limit)-math.Abs(spent)),
+	}
 }
 
 func (f *FireflyiiiConnection) newRequest(method, path string, body io.Reader) (*http.Request, error) {
@@ -132,15 +155,13 @@ func (f *FireflyiiiConnection) newRequest(method, path string, body io.Reader) (
 	return req, nil
 }
 
-type fireflyiiiBudget struct {
-	Data struct {
+type fireflyiiiLimit struct {
+	Data []struct {
 		Attributes struct {
-			Name             string `json:"name"`
-			AutoBudgetAmount string `json:"auto_budget_amount"`
-			AutoBudgetPeriod string `json:"auto_budget_period"`
-			Spent            []struct {
-				Sum string `json:"sum"`
-			} `json:"spent"`
+			Start  time.Time `json:"start"`
+			Amount string    `json:"amount"`
+			Period string    `json:"period"`
+			Spent  string    `json:"spent"`
 		} `json:"attributes"`
 	} `json:"data"`
 }
