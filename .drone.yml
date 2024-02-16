@@ -17,7 +17,7 @@ steps:
     commands:
       - aws lambda update-function-code \
         --function-name firefly-iii-budget-resp \
-        --zip-file ./main.zip
+        --zip-file fileb://main.zip
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: AWS_ACCESS_KEY_ID
