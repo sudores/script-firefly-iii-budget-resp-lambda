@@ -67,39 +67,8 @@ func getAliasFromPayload(payload []byte) (string, error) {
 	return obj.PathParameters.Id, nil
 }
 
-/*
-func (f FireflyiiiConnection) getRespBudget(id int) (*returnStruct, error) {
-	req, err := f.newRequest(http.MethodGet, "/api/v1/budgets/"+fmt.Sprint(id)+
-		fmt.Sprintf("?start=%s&end=%s", getFirstMonthDate(), getToday()), nil)
-	if err != nil {
-		return nil, err
-	}
-	log.Trace().Msgf("Getting budget request %s", req.URL.String())
-
-	r, err := f.cl.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	if r.StatusCode != http.StatusOK {
-		return nil, errors.New("Failed to fetch with status " + r.Status)
-	}
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	log.Trace().Msgf("Got responce body %s", string(body))
-	ffib := fireflyiiiLimit{}
-	if err := json.Unmarshal(body, &ffib); err != nil {
-		return nil, err
-	}
-	return fireflyiiiBudgetToreturn(ffib), nil
-}
-*/
-
 func (f FireflyiiiConnection) getBudgetCurrentLimit(id int) (*returnStruct, error) {
-	path := fmt.Sprintf("/api/v1/budgets/%d/limits&start=%s", id, getFirstMonthDate())
+	path := fmt.Sprintf("/api/v1/budgets/%d/limits?start=%s", id, getFirstMonthDate())
 	r, err := f.newRequest(http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
@@ -110,6 +79,7 @@ func (f FireflyiiiConnection) getBudgetCurrentLimit(id int) (*returnStruct, erro
 	if err != nil {
 		return nil, err
 	}
+	log.Trace().Msg("Response status code " + resp.Status)
 	if resp.StatusCode != http.StatusOK {
 		return nil, err
 	}
