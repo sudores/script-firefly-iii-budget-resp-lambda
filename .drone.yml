@@ -16,7 +16,7 @@ steps:
     image: alpine/k8s:1.26.13
     commands:
       - aws lambda update-function-code \
-        --function-name $LAMBDA_NAME \
+        --function-name firefly-iii-budget-resp \
         --zip-file ./main.zip
     environment:
       AWS_ACCESS_KEY_ID:
