@@ -81,7 +81,7 @@ func (f FireflyiiiConnection) getBudgetCurrentLimit(id int) (*returnStruct, erro
 	}
 	log.Trace().Msg("Response status code " + resp.Status)
 	if resp.StatusCode != http.StatusOK {
-		return nil, err
+		return nil, errors.New("Failed to load budget. Status code: " + fmt.Sprint(resp.StatusCode))
 	}
 
 	defer resp.Body.Close()
